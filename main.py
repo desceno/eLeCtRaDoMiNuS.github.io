@@ -1,4 +1,3 @@
-import huggingface_hub
 from llama_cpp import Llama
 from flask import Flask, request, jsonify
 
