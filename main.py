@@ -1,31 +1,27 @@
-import flet as ft
+import huggingface_hub
+from llama_cpp import Llama
+from flask import Flask, request, jsonify
 
+app = Flask(__name__)
 
-def main(page: ft.Page):
-    page.title = "Flet counter example"
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+llm = Llama.from_pretrained(
+    repo_id="Qwen/Qwen2-0.5B-Instruct-GGUF",
+    filename="*q5_0.gguf",
+    verbose=False
+)
 
-    txt_number = ft.TextField(value="0", text_align=ft.TextAlign.RIGHT, width=100)
+@app.route('/chat', methods=['GET'])
+def chat():
+    user_message = request.args.get('message')
+    
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
 
-    def minus_click(e):
-        txt_number.value = str(int(txt_number.value) - 1)
-        page.update()
-
-    def plus_click(e):
-        txt_number.value = str(int(txt_number.value) + 1)
-        page.update()
-
-    page.add(
-        ft.Row(
-            [
-                ft.IconButton(ft.icons.REMOVE, on_click=minus_click),
-                txt_number,
-                ft.IconButton(ft.icons.ADD, on_click=plus_click),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-        )
+    a = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": "hello"},
+            {"role": "user", "content": user_message}
+        ]
     )
 
-
-ft.app(main, view=ft.AppView.WEB_BROWSER)
+    return jsonify({"response": a})
